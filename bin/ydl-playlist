@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+URL="${1:-}"
+OUTDIR="${2:-/work}"
+
+if [[ -z "$URL" ]]; then
+  echo "Usage: ydl-playlist <playlist_url> [output_dir]" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+# - télécharge toute la playlist
+# - range dans un dossier nommé par la playlist
+# - numérote pour garder l'ordre
+# - fichier nommé par le titre
+yt-dlp \
+  -P "$OUTDIR" \
+  -o "%(playlist_title).150B/%(playlist_index)03d-%(uploader).80B_%(title).200B_[%(extractor)s-%(id)s].%(ext)s" \
+  --restrict-filenames \
+  --download-archive /work/.ydl-archive.txt \
+  --js-runtimes deno:/usr/local/bin/deno \
+  --force-ipv4 \
+  --sleep-interval 3 \
+  --max-sleep-interval 8 \
+  --concurrent-fragments 1 \
+  --embed-thumbnail \
+  --add-metadata \
+  --embed-chapters \
+  --yes-playlist \
+  -f "bv*+ba/best" \
+  --merge-output-format mkv \
+  --no-mtime \
+  "$URL"

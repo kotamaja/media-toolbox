@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+URL="${1:-}"
+OUTDIR="${2:-/work}"
+
+if [[ -z "$URL" ]]; then
+  echo "Usage: ydl-audio-mp3 <url> [output_dir]" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+# Convert the best available audio stream to MP3.
+# This requires re-encoding; quality 0 selects the highest VBR quality.
+yt-dlp \
+  -P "$OUTDIR" \
+  -o "%(uploader).80B_%(title).200B_[%(extractor)s-%(id)s].%(ext)s" \
+  --restrict-filenames \
+  -f "ba/best" \
+  --extract-audio \
+  --js-runtimes deno:/usr/local/bin/deno \
+  --audio-format mp3 \
+  --audio-quality 0 \
+  --add-metadata \
+  --embed-chapters \
+  --embed-thumbnail \
+  --no-mtime \
+  "$URL"

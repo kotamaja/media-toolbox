@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+URL="${1:-}"
+OUTDIR="${2:-/work}"
+
+if [[ -z "$URL" ]]; then
+  echo "Usage: ydl-video <url> [output_dir]" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+# -f bv*+ba => meilleure vidéo + meilleur audio, puis fallback best
+# --merge-output-format mkv => conteneur robuste (évite certains échecs mp4)
+# Nom basé sur le titre, avec limitation des caractères dangereux
+yt-dlp \
+  -P "$OUTDIR" \
+  -o "%(uploader).80B_%(title).200B_[%(extractor)s-%(id)s].%(ext)s" \
+  --restrict-filenames \
+  -f "bv*+ba/best" \
+  --merge-output-format mkv \
+  --js-runtimes deno:/usr/local/bin/deno \
+  --concurrent-fragments 1 \
+  --add-metadata \
+  --embed-chapters \
+  --embed-thumbnail \
+  --no-mtime \
+  "$URL"

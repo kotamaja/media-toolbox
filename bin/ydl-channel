@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+URL="${1:-}"
+OUTDIR="${2:-/work}"
+
+if [[ -z "$URL" ]]; then
+  echo "Usage: ydl-channel <channel_url> [output_dir]" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTDIR"
+
+# - télécharge toutes les vidéos de la chaîne
+# - range dans un dossier nommé par la chaîne
+# - fichier nommé avec la date, l'uploader et le titre
+# - évite de retélécharger les vidéos déjà récupérées
+yt-dlp \
+  -P "$OUTDIR" \
+  -o "%(channel).150B/%(upload_date)s-%(uploader).80B_%(title).200B_[%(extractor)s-%(id)s].%(ext)s" \
+  --restrict-filenames \
+  --download-archive /work/.ydl-channel-archive.txt \
+  --js-runtimes deno:/usr/local/bin/deno \
+  --force-ipv4 \
+  --sleep-interval 3 \
+  --max-sleep-interval 8 \
+  --concurrent-fragments 1 \
+  --embed-thumbnail \
+  --add-metadata \
+  --embed-chapters \
+  -f "bv*+ba/best" \
+  --merge-output-format mkv \
+  --no-mtime \
+  "$URL"

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+IN="${1:-}"
+OUT="${2:-}"
+START="${3:-0}"
+DUR="${4:-0}"   # 0 means full length
+
+FPS="${FPS:-15}"
+WIDTH="${WIDTH:-480}"
+
+if [[ -z "$IN" || -z "$OUT" ]]; then
+  echo "Usage: video-to-gif <input_video> <output.gif> [start_seconds] [duration_seconds]" >&2
+  echo "Env vars: FPS=15 WIDTH=480" >&2
+  exit 1
+fi
+
+FILTER="fps=${FPS},scale=${WIDTH}:-1:flags=lanczos"
+
+if [[ "$DUR" != "0" ]]; then
+  ffmpeg -hide_banner -y -ss "$START" -t "$DUR" -i "$IN" \
+    -vf "${FILTER},palettegen" /tmp/palette.png
+  ffmpeg -hide_banner -y -ss "$START" -t "$DUR" -i "$IN" -i /tmp/palette.png \
+    -lavfi "${FILTER} [x]; [x][1:v] paletteuse" "$OUT"
+else
+  ffmpeg -hide_banner -y -ss "$START" -i "$IN" \
+    -vf "${FILTER},palettegen" /tmp/palette.png
+  ffmpeg -hide_banner -y -ss "$START" -i "$IN" -i /tmp/palette.png \
+    -lavfi "${FILTER} [x]; [x][1:v] paletteuse" "$OUT"
+fi
